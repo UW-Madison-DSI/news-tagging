@@ -21,6 +21,7 @@ class Post(BaseModel):
     summary: str
     content: str
     tags_original: list
+    tags_gpt: list | None = None
 
     def save(self, path: Path | None = None) -> None:
         if path is None:
@@ -72,5 +73,7 @@ def download(url: str | None = None, save: bool = True) -> list[Post]:
     return posts
 
 
-if __name__ == "__main__":
-    download()
+def load_posts() -> list[Post]:
+    """Load all posts data from the data directory."""
+
+    return [Post.load(path) for path in POSTS_DIR.glob("*.json")]

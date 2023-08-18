@@ -10,5 +10,13 @@
         "Campus news",
         "Health & Wellness",
         "Science & Technology"
+    ],
+    "tags_gpt": [
+        "COVID-19",
+        "Misinformation",
+        "Public Health",
+        "Research",
+        "Social Studies",
+        "Conspiracy Theories"
     ]
 }
