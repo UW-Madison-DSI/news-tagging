@@ -6,3 +6,7 @@ tqdm
 pandas
 numpy
 altair
+ipykernel
+feedparser
+pydantic
+isort
