@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "locale": "en_US.UTF-8",
+  "metadata": {
+    "appmode": "python-streamlit",
+    "entrypoint": "app"
+  },
+  "python": {
+    "version": "3.11.4",
+    "package_manager": {
+      "name": "pip",
+      "version": "23.1.2",
+      "package_file": "requirements.txt"
+    }
+  },
+  "files": {
+    "requirements.txt": {
+      "checksum": "4511cd843699615ea3f3926412cb0868"
+    },
+    "app.py": {
+      "checksum": "90a48bd0d7c88b806b87a62eac55f048"
+    },
+    "data/posts/98008.json": {
+      "checksum": "f443ae2088e9e9f2591ae7287366fe18"
+    },
+    "data/posts/98021.json": {
+      "checksum": "c9cefdf0117fe8bb5767199e42cfaf68"
+    },
+    "data/posts/98048.json": {
+      "checksum": "b7bd975f165918566589e80e121f75ef"
+    },
+    "data/posts/98066.json": {
+      "checksum": "19d32d5f42c523e9686eb3109dc42440"
+    },
+    "data/posts/98099.json": {
+      "checksum": "2ec603f8376ca3e1eabbb4acdda886c9"
+    },
+    "data/posts/98106.json": {
+      "checksum": "559189b7fd794926aedc4bf400110ff8"
+    },
+    "data/posts/98127.json": {
+      "checksum": "517f273fa112944c6f49a2e98b54ca79"
+    },
+    "data/posts/98180.json": {
+      "checksum": "316673693052c522e135f81d20dd3389"
+    },
+    "data/posts/98214.json": {
+      "checksum": "a0a4b76fc9bad3c5db2db8cb8ad28598"
+    },
+    "data/posts/98245.json": {
+      "checksum": "7c667d77e5d93b0e0b339bbf4dd59f8c"
+    },
+    "data/posts/98269.json": {
+      "checksum": "ba566d81e7da42b06f8c39a0e42c6a01"
+    },
+    "data/posts/98283.json": {
+      "checksum": "0df3364fee80fa497ce97b3e1adbcb0e"
+    },
+    "data/posts/98285.json": {
+      "checksum": "47aa410b7c7955fdea7461e23bb79559"
+    },
+    "data/posts/98331.json": {
+      "checksum": "ff565f57f7d333f72264eeaf7de55462"
+    },
+    "data/posts/98333.json": {
+      "checksum": "aad1f4d9c106cbdea67a9cb38443db69"
+    },
+    "data/posts/98371.json": {
+      "checksum": "1c3ea952cb1007f76f995ba9574cb559"
+    },
+    "data/posts/98379.json": {
+      "checksum": "ebc5373d5d73194156e6277fcbaa6eca"
+    },
+    "data/posts/98382.json": {
+      "checksum": "266042e960dd9b9845fb143e1a9f7465"
+    },
+    "data/posts/98390.json": {
+      "checksum": "523efb1274ecb055d159579f2923addc"
+    },
+    "data/posts/98394.json": {
+      "checksum": "b18e07caa1b51a8835cf6cdff532035e"
+    },
+    "data/posts/98401.json": {
+      "checksum": "3e9c27e45bb5aea936d125f30c9d3d7f"
+    },
+    "data_loaded.py": {
+      "checksum": "1dcbcbcd06fe1e22affd7f2c605b10b9"
+    },
+    "gpt.py": {
+      "checksum": "3900d9cd3a9590656ac9461ba1d1f779"
+    },
+    "st_auth.py": {
+      "checksum": "fde66d7421556ed29ae50fcaa18dcd1c"
+    }
+  }
+}
