@@ -10,3 +10,4 @@ ipykernel
 feedparser
 pydantic
 isort
+bcrypt
