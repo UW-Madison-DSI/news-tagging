@@ -1,5 +1,12 @@
 import ast
+import os
+
 import openai
+from dotenv import load_dotenv
+
+load_dotenv()
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def tag(title: str, content: str):
@@ -7,7 +14,7 @@ def tag(title: str, content: str):
 
     system_message = {
         "role": "system",
-        "content": "You are a journalist who can accurately categorized news into one or more categorys / tags. You organize your output like a python list, similar to this ['tag1', 'tag2']",
+        "content": "You are a journalist who can accurately categorized news into one or more categories / tags. You organize your output like a python list, similar to this ['tag1', 'tag2']",
     }
 
     user_message = {

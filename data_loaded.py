@@ -53,12 +53,13 @@ def parse_entry(entry: FeedParserDict) -> Post:
         link=entry.link,
         title=entry.title,
         summary=entry.summary,
-        content="\n".join([strip_html_tags(con["value"]) for con in entry.content]),
+        content="\n".join([strip_html_tags(con["value"])
+                          for con in entry.content]),
         tags_original=[tag["term"] for tag in entry.tags],
     )
 
 
-def download(url: str | None = None, save: bool = True) -> list[Post]:
+def download_posts(url: str | None = None, save: bool = False) -> list[Post]:
     """Download and save the news data."""
 
     if url is None:
