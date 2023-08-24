@@ -2,6 +2,10 @@
 
 Experimental prototype for news tagging using ChatGPT
 
+## Demo
+
+[see demo](https://connect.doit.wisc.edu/dsi-news-tagging/)
+
 ## Problem Statement
 
 Given a news article, we want to tag it with relevant labels. For example, given the following news article obtained in this [feed](https://news.wisc.edu/feed/)
