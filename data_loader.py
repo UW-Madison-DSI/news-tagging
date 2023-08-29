@@ -53,8 +53,7 @@ def parse_entry(entry: FeedParserDict) -> Post:
         link=entry.link,
         title=entry.title,
         summary=entry.summary,
-        content="\n".join([strip_html_tags(con["value"])
-                          for con in entry.content]),
+        content="\n".join([strip_html_tags(con["value"]) for con in entry.content]),
         tags_original=[tag["term"] for tag in entry.tags],
     )
 
@@ -78,3 +77,20 @@ def load_posts() -> list[Post]:
     """Load all posts data from the data directory."""
 
     return [Post.load(path) for path in POSTS_DIR.glob("*.json")]
+
+
+def get_all_tags(posts: list[Post]) -> list[str]:
+    """Get all tags from all posts."""
+
+    tags = []
+    for post in posts:
+        tags.extend(post.tags_gpt)
+
+    return sorted(list(set(tags)))
+
+
+def filter_posts(posts: list[Post], tag: str | None) -> list[Post]:
+    """Filter posts by tag."""
+    if tag is None:
+        return posts
+    return [post for post in posts if tag in post.tags_gpt]
