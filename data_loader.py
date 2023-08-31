@@ -33,7 +33,14 @@ class Post(BaseModel):
 
     @property
     def tags(self) -> list:
-        return self.tags_original + self.tags_gpt + self.tags_user
+        tags = []
+        if self.tags_original:
+            tags.extend(self.tags_original)
+        if self.tags_gpt:
+            tags.extend(self.tags_gpt)
+        if self.tags_user:
+            tags.extend(self.tags_user)
+        return sorted(list(set(tags)))
 
     @classmethod
     def load(self, path: Path) -> "Post":
@@ -82,20 +89,3 @@ def load_posts() -> list[Post]:
     """Load all posts data from the data directory."""
 
     return [Post.load(path) for path in POSTS_DIR.glob("*.json")]
-
-
-def get_all_tags(posts: list[Post]) -> list[str]:
-    """Get all tags from all posts."""
-
-    tags = []
-    for post in posts:
-        tags.extend(post.tags)
-
-    return sorted(list(set(tags)))
-
-
-def filter_posts(posts: list[Post], tag: str | None) -> list[Post]:
-    """Filter posts by tag."""
-    if tag is None:
-        return posts
-    return [post for post in posts if tag in post.tags]

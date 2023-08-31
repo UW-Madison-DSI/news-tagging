@@ -2,13 +2,24 @@ import logging
 import asyncio
 import streamlit as st
 from cachetools import TTLCache, cached
-
-from data_loader import Post, download_posts, load_posts, get_all_tags, filter_posts
+from app_components import (
+    tag_filter_component,
+    posts_component,
+    format_user_input,
+    get_all_tags,
+)
+from data_loader import Post, download_posts, load_posts
 from gpt import tag, batch_user_tag
 
 st.set_page_config(page_title="UW News tagging", page_icon="📰", layout="wide")
-st.session_state.filter_selection = None
-st.session_state.ran = False
+
+# Initialize session state
+if "filter_selection" not in st.session_state:
+    st.session_state.filter_selection = []
+
+for var in ["user_tags", "user_input", "posts"]:
+    if var not in st.session_state:
+        st.session_state[var] = None
 
 
 @cached(cache=TTLCache(maxsize=1, ttl=60))
@@ -32,7 +43,7 @@ def get_posts() -> list[Post]:
     return existing_posts
 
 
-async def append_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post]:
+async def async_get_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post]:
     titles = [post.title for post in posts]
     contents = [post.content for post in posts]
     news_user_tags = await batch_user_tag(titles, contents, user_tags)
@@ -41,86 +52,27 @@ async def append_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post
     return posts
 
 
-def format_user_input(user_input: str) -> list[str]:
-    """Format user input into a list of tags."""
-    if user_input:
-        return [tag.strip().title() for tag in user_input.split(",")]
-    else:
-        return []
+@st.cache_data
+def get_user_tags(_posts: list[Post], user_tags: list[str]) -> list[Post]:
+    """Append user tags to posts."""
 
-
-def header_to_tags(header: str, post: Post) -> str:
-    mapping = {
-        "Original tags": post.tags_original,
-        "GPT-4 tags": post.tags_gpt,
-        "User tags": post.tags_user,
-    }
-    return ", ".join(mapping[header])
+    return asyncio.run(async_get_user_tags(_posts, user_tags))
 
 
 main_screen = st.container()
 
 
-def tag_filter_component(tags) -> None:
-    """Tag filter component."""
+def run() -> None:
+    """Run the data pipeline."""
 
-    with st.expander("🏷️ Filter articles by Tags"):
-        # Show tags in a grid
-        N_TAGS_PER_ROW = 5
-        for i in range(0, len(tags), N_TAGS_PER_ROW):
-            row_tags = tags[i : i + N_TAGS_PER_ROW]
-
-            # Put tags button in a row
-            for tag, col in zip(row_tags, st.columns(N_TAGS_PER_ROW)):
-                if col.button(tag, use_container_width=True):
-                    st.session_state.filter_selection = tag
-
-
-def posts_component(posts: list[Post], with_user_tag: bool) -> None:
-    """Posts component."""
-
-    n_columns = 3 if with_user_tag else 2
-    tags_headers = ["Original tags", "GPT-4 tags", "User tags"][:n_columns]
-
-    display_posts = filter_posts(posts, st.session_state.filter_selection)
-    for post in display_posts:
-        st.subheader(post.title)
-        st.write(f"Summary: {post.summary}")
-
-        columns = st.columns(n_columns, gap="medium")
-
-        for i, col in enumerate(columns):
-            header = tags_headers[i]
-            col.subheader(header)
-            col.write(header_to_tags(header, post))
-
-        with st.expander("🔎 Show technical details"):
-            st.json(post.model_dump_json())
-
-
-def run(user_input: str) -> None:
-    """Run the app."""
-
-    st.session_state.ran = True
-    posts = get_posts()
+    st.session_state.posts = get_posts()
+    st.session_state.user_tags = format_user_input(st.session_state.user_input)
 
     # Process user tags
-    if user_tags := format_user_input(user_input):
-        posts = asyncio.run(append_user_tags(posts, user_tags))
-
-    tags = get_all_tags(posts)
-
-    with main_screen:
-        st.header("📰 UW News articles")
-
-        if user_input:
-            st.write(f"Your custom tags: {user_tags}")
-
-        # Show tag filter component
-        tag_filter_component(tags)
-
-        # Show posts component
-        posts_component(posts, with_user_tag=bool(user_tags))
+    if st.session_state.user_tags:
+        st.session_state.posts = get_user_tags(
+            st.session_state.posts, st.session_state.user_tags
+        )
 
 
 # Sidebar
@@ -129,14 +81,14 @@ with st.sidebar:
     st.write(
         "You can choose to provide a list of custom tags to change the way the system categorizes news."
     )
-    user_input = st.text_input(
+    st.session_state.user_input = st.text_input(
         "Optionally enter a list of custom tags (comma separated)",
         key="custom_tags",
         placeholder="e.g. physics, astronomy, space, psychology",
     )
 
     if st.button("Run"):
-        run(user_input)
+        run()
 
 
 # Splash screen
@@ -154,5 +106,23 @@ def splash_screen():
 
 
 with main_screen:
-    if not st.session_state.ran:
+    # If the app has not been run, show the splash screen
+    # TODO: change to all tags
+
+    if not st.session_state.posts:
         splash_screen()
+    else:
+        tags = get_all_tags(st.session_state.posts)
+
+        st.header("📰 UW News articles")
+
+        if st.session_state.user_tags:
+            st.write(f"Your custom tags: {st.session_state.user_tags}")
+
+        # Show tag filter component
+        tag_filter_component(tags)
+
+        # Show posts component
+        posts_component(
+            st.session_state.posts, with_user_tag=bool(st.session_state.user_tags)
+        )
