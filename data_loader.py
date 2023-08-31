@@ -22,6 +22,7 @@ class Post(BaseModel):
     content: str
     tags_original: list
     tags_gpt: list | None = None
+    tags_user: list | None = None
 
     def save(self, path: Path | None = None) -> None:
         if path is None:
@@ -41,7 +42,7 @@ def strip_html_tags(x: str) -> str:
     return clean_text
 
 
-def parse_entry(entry: FeedParserDict) -> Post:
+def parse_rss_entry(entry: FeedParserDict) -> Post:
     """Parse a single entry from the RSS feed into a News object."""
 
     d = entry.published_parsed
@@ -65,7 +66,7 @@ def download_posts(url: str | None = None, save: bool = False) -> list[Post]:
         url = NEWS_URL
 
     feed = feedparser.parse(NEWS_URL)
-    posts = list(map(parse_entry, feed.entries))
+    posts = list(map(parse_rss_entry, feed.entries))
 
     if save:
         [news.save() for news in posts]

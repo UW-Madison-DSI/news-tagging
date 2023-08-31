@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
+# MODEL = "gpt-4"
+MODEL = "gpt-3.5-turbo"
 
 
 def tag(title: str, content: str) -> list[str]:
@@ -25,7 +27,7 @@ def tag(title: str, content: str) -> list[str]:
     }
 
     response = openai.ChatCompletion.create(
-        model="gpt-4", messages=[system_message, user_message], temperature=0.9
+        model=MODEL, messages=[system_message, user_message], temperature=0.9
     )
 
     return ast.literal_eval(response["choices"][0]["message"]["content"])
@@ -47,7 +49,7 @@ async def user_tag(title: str, content: str, target_tags: list) -> list[str]:
     }
 
     response = await openai.ChatCompletion.acreate(
-        model="gpt-4", messages=[system_message, user_message], temperature=0.9
+        model=MODEL, messages=[system_message, user_message], temperature=0.9
     )
 
     return ast.literal_eval(response["choices"][0]["message"]["content"])
