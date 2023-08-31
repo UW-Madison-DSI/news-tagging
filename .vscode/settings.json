@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
+        "acreate",
+        "aiohttp",
+        "aiosession",
         "cachetools",
         "gensalt",
         "mday"
