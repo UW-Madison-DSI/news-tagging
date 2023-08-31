@@ -31,6 +31,10 @@ class Post(BaseModel):
         with open(path, "w") as f:
             f.write(self.model_dump_json(indent=4))
 
+    @property
+    def tags(self) -> list:
+        return self.tags_original + self.tags_gpt + self.tags_user
+
     @classmethod
     def load(self, path: Path) -> "Post":
         with open(path, "r") as f:
@@ -85,7 +89,7 @@ def get_all_tags(posts: list[Post]) -> list[str]:
 
     tags = []
     for post in posts:
-        tags.extend(post.tags_gpt)
+        tags.extend(post.tags)
 
     return sorted(list(set(tags)))
 
@@ -94,4 +98,4 @@ def filter_posts(posts: list[Post], tag: str | None) -> list[Post]:
     """Filter posts by tag."""
     if tag is None:
         return posts
-    return [post for post in posts if tag in post.tags_gpt]
+    return [post for post in posts if tag in post.tags]
