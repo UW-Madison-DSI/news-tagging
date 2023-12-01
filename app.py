@@ -37,7 +37,7 @@ def get_posts() -> list[Post]:
     # Tag and save new posts
     for post in new_posts:
         logging.info(f"Tagging new post {post.id}")
-        post.tags_gpt = tag(post.title, post.summary)
+        post.tags_gpt = tag(post.to_text())
         post.save()
 
     existing_posts.extend(new_posts)
@@ -45,9 +45,8 @@ def get_posts() -> list[Post]:
 
 
 async def async_get_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post]:
-    titles = [post.title for post in posts]
-    summaries = [post.summary for post in posts]
-    news_user_tags = await batch_user_tag(titles, summaries, user_tags)
+    texts = [post.to_text() for post in posts]
+    news_user_tags = await batch_user_tag(texts, user_tags)
     for post, tags in zip(posts, news_user_tags):
         post.tags_user = tags
     return posts

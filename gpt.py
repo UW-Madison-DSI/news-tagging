@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
-MODEL = "gpt-4"
-# MODEL = "gpt-3.5-turbo"
+MODEL = os.getenv("GPT_MODEL")
+TEMPERATURE = float(os.getenv("GPT_TEMPERATURE"))
 
 
-def tag(title: str, content: str) -> list[str]:
+def tag(text: str) -> list[str]:
     """Tag news into one or more category / tags."""
 
     system_message = {
@@ -23,17 +23,17 @@ def tag(title: str, content: str) -> list[str]:
 
     user_message = {
         "role": "user",
-        "content": f"Please tag the following news into one or more categories: '{title} {content}'",
+        "content": f"Please tag the following news into one or more categories: '{text}'",
     }
 
     response = openai.ChatCompletion.create(
-        model=MODEL, messages=[system_message, user_message], temperature=0.9
+        model=MODEL, messages=[system_message, user_message], temperature=TEMPERATURE
     )
 
     return ast.literal_eval(response["choices"][0]["message"]["content"])
 
 
-async def user_tag(title: str, content: str, target_tags: list) -> list[str]:
+async def user_tag(text: str, target_tags: list) -> list[str]:
     """Tag news into one or more targeted category / tags."""
 
     system_message = {
@@ -45,26 +45,22 @@ async def user_tag(title: str, content: str, target_tags: list) -> list[str]:
 
     user_message = {
         "role": "user",
-        "content": f"Please tag the following news into one or more categories: '{title} {content}'",
+        "content": f"Please tag the following news into one or more categories: '{text}'",
     }
 
     response = await openai.ChatCompletion.acreate(
-        model=MODEL, messages=[system_message, user_message], temperature=0.9
+        model=MODEL, messages=[system_message, user_message], temperature=TEMPERATURE
     )
 
-    return ast.literal_eval(response["choices"][0]["message"]["content"])
+    proposed_tags = ast.literal_eval(response["choices"][0]["message"]["content"])
+    return list(set(proposed_tags).intersection(target_tags))
 
 
-async def batch_user_tag(
-    titles: list[str], contents: list[str], target_tags: list
-) -> list[list[str]]:
+async def batch_user_tag(texts: list[str], target_tags: list) -> list[list[str]]:
     """Tag news in batch mode in targeted categories."""
 
     openai.aiosession.set(ClientSession())
-    async_responses = [
-        user_tag(title, content, target_tags)
-        for title, content in zip(titles, contents)
-    ]
+    async_responses = [user_tag(text, target_tags) for text in texts]
     user_tag_results = await asyncio.gather(*async_responses)
     await openai.aiosession.get().close()
     return user_tag_results

@@ -47,6 +47,9 @@ class Post(BaseModel):
         with open(path, "r") as f:
             return Post(**json.load(f))
 
+    def to_text(self) -> str:
+        return f"{self.title} {self.content}"
+
 
 def strip_html_tags(x: str) -> str:
     clean_text = re.sub("<.*?>", "", x)
