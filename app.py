@@ -41,7 +41,7 @@ def get_posts() -> list[Post]:
         post.save()
 
     existing_posts.extend(new_posts)
-    return existing_posts
+    return sorted(existing_posts, reverse=True)
 
 
 async def async_get_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post]:

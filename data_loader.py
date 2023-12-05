@@ -50,6 +50,9 @@ class Post(BaseModel):
     def to_text(self) -> str:
         return f"{self.title} {self.content}"
 
+    def __lt__(self, other: "Post") -> bool:
+        return self.date < other.date
+
 
 def strip_html_tags(x: str) -> str:
     clean_text = re.sub("<.*?>", "", x)
