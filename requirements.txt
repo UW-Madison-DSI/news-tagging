@@ -11,3 +11,5 @@ feedparser
 pydantic
 isort
 bcrypt
+peewee
+beautifulsoup4
