@@ -13,3 +13,4 @@ isort
 bcrypt
 peewee
 beautifulsoup4
+tiktoken
