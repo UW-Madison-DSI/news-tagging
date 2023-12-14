@@ -1,97 +1,49 @@
-import json
-import re
-from datetime import date
-from pathlib import Path
+import requests
+from bs4 import BeautifulSoup
 
-import feedparser
-from feedparser.util import FeedParserDict
-from pydantic import BaseModel
-
-POSTS_DIR = Path("data/posts")
-POSTS_DIR.mkdir(exist_ok=True)
-NEWS_URL = "https://news.wisc.edu/feed"
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
 
 
-class Post(BaseModel):
-    id: str
-    author: str
-    date: date
-    link: str
-    title: str
-    summary: str
-    content: str
-    tags_original: list
-    tags_gpt: list | None = None
-    tags_user: list | None = None
-
-    def save(self, path: Path | None = None) -> None:
-        if path is None:
-            path = POSTS_DIR / f"{self.id}.json"
-
-        with open(path, "w") as f:
-            f.write(self.model_dump_json(indent=4))
-
-    @property
-    def tags(self) -> list:
-        tags = []
-        if self.tags_original:
-            tags.extend(self.tags_original)
-        if self.tags_gpt:
-            tags.extend(self.tags_gpt)
-        if self.tags_user:
-            tags.extend(self.tags_user)
-        return sorted(list(set(tags)))
-
-    @classmethod
-    def load(self, path: Path) -> "Post":
-        with open(path, "r") as f:
-            return Post(**json.load(f))
-
-    def to_text(self) -> str:
-        return f"{self.title} {self.content}"
-
-    def __lt__(self, other: "Post") -> bool:
-        return self.date < other.date
+def html_to_plain_text(html):
+    soup = BeautifulSoup(html, "html.parser")
+    text = soup.get_text()
+    return text
 
 
-def strip_html_tags(x: str) -> str:
-    clean_text = re.sub("<.*?>", "", x)
-    return clean_text
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+def get_taxonomy(post: dict, key: str) -> list[str]:
+    taxonomy = {x["taxonomy"]: x["href"] for x in post["_links"]["wp:term"]}
+    response = requests.get(taxonomy[key])
+    response.raise_for_status()
+    output = [x["name"] for x in response.json()]
+    if not output:
+        return None
+    return output
 
 
-def parse_rss_entry(entry: FeedParserDict) -> Post:
-    """Parse a single entry from the RSS feed into a News object."""
+def parse_wp_post(post: dict) -> dict:
+    """Parse a WordPress post into a dictionary."""
+    return {
+        "id": post["id"],
+        "link": post["link"],
+        "date_gmt": post["date_gmt"],
+        "title": html_to_plain_text(post["title"]["rendered"]),
+        "summary": html_to_plain_text(post["excerpt"]["rendered"]),
+        "content": html_to_plain_text(post["content"]["rendered"]),
+        "category": get_taxonomy(post, "category"),
+        "post_tag": get_taxonomy(post, "post_tag"),
+        "syndication": get_taxonomy(post, "syndication"),
+    }
 
-    d = entry.published_parsed
 
-    return Post(
-        id=re.findall(r"\d+", entry.id)[0],
-        author=entry.author,
-        date=date(d.tm_year, d.tm_mon, d.tm_mday),
-        link=entry.link,
-        title=entry.title,
-        summary=entry.summary,
-        content="\n".join([strip_html_tags(con["value"]) for con in entry.content]),
-        tags_original=[tag["term"] for tag in entry.tags],
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+def pull_posts(page: int, batch_size: int = 10, order: str = "desc") -> list[dict]:
+    response = requests.get(
+        f"https://news.wisc.edu/wp-json/wp/v2/posts?per_page={batch_size}&page={page}&order={order}"
     )
-
-
-def download_posts(url: str | None = None, save: bool = False) -> list[Post]:
-    """Download and save the news data."""
-
-    if url is None:
-        url = NEWS_URL
-
-    feed = feedparser.parse(NEWS_URL)
-    posts = list(map(parse_rss_entry, feed.entries))
-
-    if save:
-        [news.save() for news in posts]
-
-    return posts
-
-
-def load_posts() -> list[Post]:
-    """Load all posts data from the data directory."""
-
-    return [Post.load(path) for path in POSTS_DIR.glob("*.json")]
+    response.raise_for_status()
+    return [parse_wp_post(post) for post in response.json()]
