@@ -5,7 +5,8 @@
         "aiosession",
         "cachetools",
         "gensalt",
-        "mday"
+        "mday",
+        "tiktoken"
     ],
     "[python]": {
         "editor.defaultFormatter": "ms-python.black-formatter"
