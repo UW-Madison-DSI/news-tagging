@@ -1,6 +1,12 @@
 import requests
 from bs4 import BeautifulSoup
 
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_random_exponential,
+)
+
 
 def html_to_plain_text(html):
     soup = BeautifulSoup(html, "html.parser")
@@ -8,6 +14,7 @@ def html_to_plain_text(html):
     return text
 
 
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def get_taxonomy(post: dict, key: str) -> list[str]:
     taxonomy = {x["taxonomy"]: x["href"] for x in post["_links"]["wp:term"]}
     response = requests.get(taxonomy[key])
@@ -33,6 +40,7 @@ def parse_wp_post(post: dict) -> dict:
     }
 
 
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 def pull_posts(page: int, batch_size: int = 10, order: str = "desc") -> list[dict]:
     response = requests.get(
         f"https://news.wisc.edu/wp-json/wp/v2/posts?per_page={batch_size}&page={page}&order={order}"
