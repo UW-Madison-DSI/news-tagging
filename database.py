@@ -28,7 +28,7 @@ class Post(BaseModel):
     summary = TextField()
     content = TextField()
     category = CharField(null=True)
-    post_tags = CharField(null=True)
+    post_tag = CharField(null=True)
     syndication = CharField(null=True)
 
 

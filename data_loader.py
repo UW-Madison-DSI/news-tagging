@@ -25,6 +25,25 @@ def get_taxonomy(post: dict, key: str) -> list[str]:
     return output
 
 
+@retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
+def get_taxonomy_from_id(id: str, taxonomy: str) -> list[str]:
+    """For repairing empty `post_tag` field."""
+
+    route_map = {
+        "category": "categories",
+        "post_tag": "tags",
+        "syndication": "syndication",
+    }
+
+    url = f"https://news.wisc.edu/wp-json/wp/v2/{route_map[taxonomy]}?post={id}"
+    response = requests.get(url)
+    response.raise_for_status()
+    output = [x["name"] for x in response.json()]
+    if not output:
+        return None
+    return output
+
+
 def parse_wp_post(post: dict) -> dict:
     """Parse a WordPress post into a dictionary."""
     return {
