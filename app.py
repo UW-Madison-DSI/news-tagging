@@ -1,15 +1,17 @@
-import logging
+import peewee
 import asyncio
+import ast
 import streamlit as st
 from cachetools import TTLCache, cached
 from app_components import (
+    Post,
     tag_filter_component,
     posts_component,
     splash_screen_component,
     format_user_input,
     get_all_tags,
 )
-from data_loader import Post, download_posts, load_posts
+from database import Post as DBPost
 from gpt import tag, batch_user_tag
 
 st.set_page_config(page_title="UW News tagging", page_icon="📰", layout="wide")
@@ -23,29 +25,49 @@ for var in ["user_tags", "user_input", "posts"]:
         st.session_state[var] = None
 
 
-@cached(cache=TTLCache(maxsize=1, ttl=60))
-def get_posts() -> list[Post]:
-    """Update and get all posts."""
+@cached(cache=TTLCache(maxsize=1, ttl=600))
+def get_posts(n: int = 10) -> list[Post]:
+    """Get 10 random post from local DB."""
 
-    existing_posts = load_posts()
-    live_posts = download_posts()
-    exist_ids = [p.id for p in existing_posts]
+    pub_date = peewee.fn.DATETIME(DBPost.date_gmt).alias("pub_date")
+    query = (
+        DBPost.select(
+            DBPost.id,
+            DBPost.title,
+            DBPost.summary,
+            DBPost.content,
+            DBPost.category,
+            DBPost.post_tag,
+            DBPost.syndication,
+            pub_date,
+        )
+        .order_by(pub_date.desc())
+        .limit(n)
+    )
 
-    # Filter out posts that are already exist
-    new_posts = [post for post in live_posts if post.id not in exist_ids]
+    posts = []
+    for x in query.dicts():
+        posts.append(
+            Post(
+                id=x["id"],
+                pub_date=x["pub_date"],
+                title=x["title"],
+                summary=x["summary"],
+                content=x["content"],
+                category=ast.literal_eval(x["category"]) if x["category"] else [],
+                post_tag=ast.literal_eval(x["post_tag"]) if x["post_tag"] else [],
+                syndication=ast.literal_eval(x["syndication"])
+                if x["syndication"]
+                else [],
+                tags_gpt=tag(f"{x['title']} {x['summary']}"),
+            )
+        )
 
-    # Tag and save new posts
-    for post in new_posts:
-        logging.info(f"Tagging new post {post.id}")
-        post.tags_gpt = tag(post.to_text())
-        post.save()
-
-    existing_posts.extend(new_posts)
-    return sorted(existing_posts, reverse=True)
+    return posts
 
 
 async def async_get_user_tags(posts: list[Post], user_tags: list[str]) -> list[Post]:
-    texts = [post.to_text() for post in posts]
+    texts = [f"{post.title} {post.summary}" for post in posts]
     news_user_tags = await batch_user_tag(texts, user_tags)
     for post, tags in zip(posts, news_user_tags):
         post.tags_user = tags
