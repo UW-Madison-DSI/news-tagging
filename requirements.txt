@@ -1,6 +1,6 @@
 langchain
 openai==0.28.1
-streamlit
+streamlit==1.28.2
 python-dotenv
 tqdm
 pandas
